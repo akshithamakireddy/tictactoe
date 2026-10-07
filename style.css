@@ -1,0 +1,653 @@
+/* ==========================================================================
+   Modern Gaming-Style Tic-Tac-Toe Stylesheet
+   ========================================================================== */
+
+/* Design Tokens & CSS Custom Properties */
+:root {
+  /* Brand & Player Colors */
+  --color-x: #00f2fe;
+  --color-x-grad: linear-gradient(135deg, #00f2fe 0%, #4facfe 100%);
+  --color-x-glow: rgba(0, 242, 254, 0.45);
+
+  --color-o: #ff2d75;
+  --color-o-grad: linear-gradient(135deg, #ff2d75 0%, #ff839f 100%);
+  --color-o-glow: rgba(255, 45, 117, 0.45);
+
+  --color-draw: #fbbf24;
+  --color-draw-glow: rgba(251, 191, 36, 0.45);
+
+  /* Background & Surface Colors */
+  --bg-deep: #070913;
+  --bg-card: rgba(15, 23, 42, 0.65);
+  --bg-card-border: rgba(255, 255, 255, 0.12);
+  --bg-cell: rgba(30, 41, 59, 0.55);
+  --bg-cell-hover: rgba(51, 65, 85, 0.7);
+
+  /* Typography Colors */
+  --text-primary: #f8fafc;
+  --text-muted: #94a3b8;
+  --text-subtle: #64748b;
+
+  /* Elevation Shadows */
+  --shadow-card: 0 25px 50px -12px rgba(0, 0, 0, 0.7), 0 0 40px rgba(99, 102, 241, 0.12);
+  --shadow-cell: 0 8px 24px -4px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.12);
+
+  /* Radii & Transitions */
+  --radius-xl: 28px;
+  --radius-lg: 18px;
+  --radius-md: 14px;
+  --radius-sm: 10px;
+  --transition-bounce: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  --transition-smooth: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Base Reset */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--bg-deep);
+  color: var(--text-primary);
+  padding: 16px;
+  overflow-x: hidden;
+  position: relative;
+}
+
+/* --------------------------------------------------------------------------
+   Ambient Animated Gradient Background
+   -------------------------------------------------------------------------- */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: 
+    radial-gradient(circle at 15% 20%, rgba(99, 102, 241, 0.25) 0%, transparent 45%),
+    radial-gradient(circle at 85% 80%, rgba(255, 45, 117, 0.2) 0%, transparent 45%),
+    radial-gradient(circle at 50% 50%, rgba(0, 242, 254, 0.15) 0%, transparent 55%),
+    linear-gradient(180deg, #070913 0%, #0d1222 100%);
+  background-size: 150% 150%;
+  animation: gradientShift 14s ease-in-out infinite alternate;
+  z-index: 0;
+  pointer-events: none;
+}
+
+@keyframes gradientShift {
+  0% {
+    background-position: 0% 0%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 50% 100%;
+  }
+}
+
+/* Floating Ambient Glow Blobs */
+.ambient-glow {
+  position: fixed;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.6;
+  pointer-events: none;
+  z-index: 0;
+  animation: floatDrift 18s ease-in-out infinite alternate;
+}
+
+.glow-1 {
+  width: 320px;
+  height: 320px;
+  background: rgba(0, 242, 254, 0.22);
+  top: 5%;
+  left: 10%;
+}
+
+.glow-2 {
+  width: 360px;
+  height: 360px;
+  background: rgba(255, 45, 117, 0.2);
+  bottom: 8%;
+  right: 8%;
+  animation-duration: 22s;
+  animation-delay: -5s;
+}
+
+.glow-3 {
+  width: 280px;
+  height: 280px;
+  background: rgba(99, 102, 241, 0.2);
+  top: 45%;
+  left: 55%;
+  animation-duration: 16s;
+  animation-delay: -9s;
+}
+
+@keyframes floatDrift {
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(40px, -30px) scale(1.1);
+  }
+  100% {
+    transform: translate(-30px, 40px) scale(0.95);
+  }
+}
+
+/* --------------------------------------------------------------------------
+   App Container & Glassmorphism Card
+   -------------------------------------------------------------------------- */
+.game-wrapper {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 460px;
+}
+
+.glass-card {
+  background: var(--bg-card);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid var(--bg-card-border);
+  border-radius: var(--radius-xl);
+  padding: 28px 24px;
+  box-shadow: var(--shadow-card);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  transition: border-color 0.3s ease;
+}
+
+/* --------------------------------------------------------------------------
+   Header Section
+   -------------------------------------------------------------------------- */
+.game-header {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.game-badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  padding: 4px 14px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--text-muted);
+}
+
+.game-title {
+  font-size: 2.2rem;
+  font-weight: 900;
+  letter-spacing: 0.05em;
+  line-height: 1.1;
+  color: #ffffff;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+}
+
+.accent-x {
+  color: var(--color-x);
+  text-shadow: 0 0 18px var(--color-x-glow);
+}
+
+.accent-o {
+  color: var(--color-o);
+  text-shadow: 0 0 18px var(--color-o-glow);
+}
+
+/* --------------------------------------------------------------------------
+   Scoreboard Cards
+   -------------------------------------------------------------------------- */
+.scoreboard {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  width: 100%;
+}
+
+.score-card {
+  background: rgba(15, 23, 42, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-md);
+  padding: 12px 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 6px;
+  position: relative;
+  overflow: hidden;
+  transition: var(--transition-bounce);
+}
+
+.score-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255, 255, 255, 0.18);
+  box-shadow: 0 8px 20px -4px rgba(0, 0, 0, 0.4);
+}
+
+.player-icon-badge {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 900;
+  font-size: 0.85rem;
+}
+
+.x-badge {
+  background: rgba(0, 242, 254, 0.15);
+  color: var(--color-x);
+  border: 1px solid var(--color-x);
+}
+
+.draw-badge {
+  background: rgba(251, 191, 36, 0.15);
+  color: var(--color-draw);
+  border: 1px solid var(--color-draw);
+  font-size: 0.72rem;
+}
+
+.o-badge {
+  background: rgba(255, 45, 117, 0.15);
+  color: var(--color-o);
+  border: 1px solid var(--color-o);
+}
+
+.score-details {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.player-name {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+}
+
+.score-value {
+  font-size: 1.6rem;
+  font-weight: 900;
+  line-height: 1.15;
+  color: #ffffff;
+  transition: transform 0.2s ease;
+}
+
+.score-label {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  color: var(--text-subtle);
+  font-weight: 600;
+}
+
+/* Active Highlight for Player Cards */
+.card-x.active-player {
+  border-color: var(--color-x);
+  box-shadow: 0 0 20px var(--color-x-glow);
+  background: rgba(0, 242, 254, 0.08);
+}
+
+.card-o.active-player {
+  border-color: var(--color-o);
+  box-shadow: 0 0 20px var(--color-o-glow);
+  background: rgba(255, 45, 117, 0.08);
+}
+
+/* --------------------------------------------------------------------------
+   Turn & Status Pill Indicator
+   -------------------------------------------------------------------------- */
+.status-wrapper {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 22px;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  transition: var(--transition-bounce);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+.pulse-indicator {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+  transition: var(--transition-smooth);
+}
+
+/* Player X Turn State */
+.status-pill.turn-x {
+  border-color: rgba(0, 242, 254, 0.4);
+  box-shadow: 0 0 16px rgba(0, 242, 254, 0.2);
+  color: var(--color-x);
+}
+.status-pill.turn-x .pulse-indicator {
+  background-color: var(--color-x);
+  box-shadow: 0 0 10px var(--color-x);
+  animation: pulseDot 1.5s infinite;
+}
+
+/* Player O Turn State */
+.status-pill.turn-o {
+  border-color: rgba(255, 45, 117, 0.4);
+  box-shadow: 0 0 16px rgba(255, 45, 117, 0.2);
+  color: var(--color-o);
+}
+.status-pill.turn-o .pulse-indicator {
+  background-color: var(--color-o);
+  box-shadow: 0 0 10px var(--color-o);
+  animation: pulseDot 1.5s infinite;
+}
+
+/* Player X Win State */
+.status-pill.win-x {
+  background: rgba(0, 242, 254, 0.16);
+  border-color: var(--color-x);
+  color: #ffffff;
+  box-shadow: 0 0 25px var(--color-x-glow);
+  transform: scale(1.05);
+}
+.status-pill.win-x .pulse-indicator {
+  background-color: var(--color-x);
+  box-shadow: 0 0 14px var(--color-x);
+}
+
+/* Player O Win State */
+.status-pill.win-o {
+  background: rgba(255, 45, 117, 0.16);
+  border-color: var(--color-o);
+  color: #ffffff;
+  box-shadow: 0 0 25px var(--color-o-glow);
+  transform: scale(1.05);
+}
+.status-pill.win-o .pulse-indicator {
+  background-color: var(--color-o);
+  box-shadow: 0 0 14px var(--color-o);
+}
+
+/* Draw State */
+.status-pill.draw {
+  background: rgba(251, 191, 36, 0.16);
+  border-color: var(--color-draw);
+  color: #ffffff;
+  box-shadow: 0 0 25px var(--color-draw-glow);
+  transform: scale(1.05);
+}
+.status-pill.draw .pulse-indicator {
+  background-color: var(--color-draw);
+  box-shadow: 0 0 14px var(--color-draw);
+}
+
+@keyframes pulseDot {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.35);
+    opacity: 0.7;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   3x3 Board & Cell Elements
+   -------------------------------------------------------------------------- */
+.board-container {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.grid-board {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  width: 100%;
+  max-width: 380px;
+  aspect-ratio: 1 / 1;
+  background: rgba(15, 23, 42, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-lg);
+  padding: 12px;
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.4);
+  touch-action: manipulation;
+}
+
+.board-cell {
+  background: var(--bg-cell);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-cell);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: clamp(2.6rem, 11vw, 3.8rem);
+  font-weight: 900;
+  line-height: 1;
+  user-select: none;
+  outline: none;
+  position: relative;
+  transition: var(--transition-bounce);
+}
+
+/* Cell Hover & Click Micro-Interactions */
+.board-cell:not(.taken):not(:disabled):hover {
+  background: var(--bg-cell-hover);
+  border-color: rgba(255, 255, 255, 0.25);
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 12px 28px -4px rgba(0, 0, 0, 0.6), inset 0 1px 1px rgba(255, 255, 255, 0.2);
+}
+
+.board-cell:not(.taken):not(:disabled):active {
+  transform: scale(0.95);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+}
+
+.board-cell:focus-visible {
+  outline: 2px solid #6366f1;
+  outline-offset: 3px;
+}
+
+/* Cell Marks */
+.board-cell.x {
+  color: var(--color-x);
+  text-shadow: 0 0 22px var(--color-x-glow);
+  cursor: default;
+}
+
+.board-cell.o {
+  color: var(--color-o);
+  text-shadow: 0 0 22px var(--color-o-glow);
+  cursor: default;
+}
+
+/* Stylish Pop-In Animation for Placed Symbols */
+.board-cell.pop {
+  animation: markPopIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+@keyframes markPopIn {
+  0% {
+    transform: scale(0.2) rotate(-18deg);
+    opacity: 0;
+  }
+  65% {
+    transform: scale(1.22) rotate(4deg);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Winning Highlight & Radiant Glow
+   -------------------------------------------------------------------------- */
+.board-cell.winner {
+  animation: winningCellGlow 1.2s infinite alternate ease-in-out;
+  border-color: #ffffff;
+  z-index: 3;
+}
+
+.board-cell.winner.x {
+  background: rgba(0, 242, 254, 0.22);
+  box-shadow: 
+    0 0 30px var(--color-x-glow),
+    inset 0 0 18px rgba(0, 242, 254, 0.4);
+}
+
+.board-cell.winner.o {
+  background: rgba(255, 45, 117, 0.22);
+  box-shadow: 
+    0 0 30px var(--color-o-glow),
+    inset 0 0 18px rgba(255, 45, 117, 0.4);
+}
+
+@keyframes winningCellGlow {
+  0% {
+    transform: scale(1);
+    filter: brightness(1);
+  }
+  100% {
+    transform: scale(1.06);
+    filter: brightness(1.25);
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Action Buttons (New Game & Reset Score)
+   -------------------------------------------------------------------------- */
+.controls-container {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+}
+
+.btn {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 13px 18px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  border-radius: var(--radius-md);
+  border: none;
+  cursor: pointer;
+  transition: var(--transition-bounce);
+  outline: none;
+}
+
+.btn-svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* Primary "New Game" Button */
+.btn-primary {
+  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 50%, #06b6d4 100%);
+  background-size: 200% 200%;
+  color: #ffffff;
+  box-shadow: 0 6px 20px rgba(79, 70, 229, 0.4);
+}
+
+.btn-primary:hover {
+  background-position: 100% 100%;
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(79, 70, 229, 0.55);
+}
+
+.btn-primary:active {
+  transform: translateY(0) scale(0.97);
+}
+
+/* Secondary "Reset Score" Button */
+.btn-secondary {
+  background: rgba(30, 41, 59, 0.7);
+  color: var(--text-muted);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+}
+
+.btn-secondary:hover {
+  background: rgba(51, 65, 85, 0.85);
+  color: var(--text-primary);
+  border-color: rgba(255, 255, 255, 0.22);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.35);
+}
+
+.btn-secondary:active {
+  transform: translateY(0) scale(0.97);
+}
+
+/* --------------------------------------------------------------------------
+   Mobile & Responsive Adjustments
+   -------------------------------------------------------------------------- */
+@media (max-width: 480px) {
+  body {
+    padding: 10px;
+  }
+
+  .glass-card {
+    padding: 20px 16px;
+    gap: 16px;
+    border-radius: var(--radius-lg);
+  }
+
+  .game-title {
+    font-size: 1.85rem;
+  }
+
+  .grid-board {
+    gap: 8px;
+    padding: 8px;
+  }
+
+  .board-cell {
+    border-radius: var(--radius-sm);
+  }
+
+  .controls-container {
+    flex-direction: column;
+  }
+
+  .btn {
+    width: 100%;
+    padding: 13px;
+  }
+}
